@@ -12,11 +12,14 @@ forward OnPlayerPickUpPlayerPickup(playerid, pickupid);
 ```pawn
 CreatePlayerPickup(playerid, modelid, type, Float:x, Float:y, Float:z, worldid = -1, Float:streamdistance);
 DestroyPlayerPickup(playerid, pickupid);
+
 IsValidPlayerPickup(playerid, pickupid);
+
 SetPlayerPickupVirtualWorld(playerid, pickupid, worldid);
 SetPlayerPickupPos(playerid, pickupid, Float:x, Float:y, Float:z);
 SetPlayerPickupModel(playerid, pickupid, modelid);
 SetPlayerPickupType(playerid, pickupid, typeid);
+
 GetPlayerPickupVirtualWorld(playerid, pickupid);
 GetPlayerPickupPos(playerid, pickupid, &Float:x, &Float:y, &Float:z);
 GetPlayerPickupModel(playerid, pickupid);
