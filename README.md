@@ -26,4 +26,4 @@ GetPlayerPickupModel(playerid, pickupid);
 GetPlayerPickupType(playerid, pickupid);
 ```
 
->The pickups are automatically removed after the player exits.
+>The pickups are automatically NOT removed after the player exits.
