@@ -22,61 +22,17 @@
 
 static const ORPC_CREATE_PL_PICKUP = 95;
 
-static
-	bool:gPlayerPickupsIsStreamPickup[MAX_PICKUPS],
-	IteratorArray:PlayerPickupsId[MAX_PLAYERS]<MAX_PICKUPS>;
+static bool:gPlayerPickupsIsStreamPickup[MAX_PICKUPS];
 
 
 forward OnPlayerPickUpPlayerPickup(playerid, pickupid);
 
-public OnGameModeInit()
-{
-	Iter_Init(PlayerPickupsId);
-#if defined sppick_OnGameModeInit
-	return sppick_OnGameModeInit();
-#else
-	return 1;
-#endif
-}
-#if defined _ALS_OnGameModeInit
-	#undef OnGameModeInit
-#else
-	#define _ALS_OnGameModeInit
-#endif
-#define OnGameModeInit sppick_OnGameModeInit
-#if defined    sppick_OnGameModeInit
-	forward sppick_OnGameModeInit();
-#endif
-
-public OnPlayerDisconnect(playerid, reason)
-{
-	foreach (PlayerPickupsId[playerid], pickupid)
-	{
-		gPlayerPickupsIsStreamPickup[pickupid] = false;
-		DestroyDynamicPickup(pickupid);
-	}
-	Iter_Clear(PlayerPickupsId[playerid]);
-#if defined sppick_OnPlayerDisconnect
-	return sppick_OnPlayerDisconnect(playerid, reason);
-#else
-	return 1;
-#endif
-}
-#if defined _ALS_OnPlayerDisconnect
-	#undef OnPlayerDisconnect
-#else
-	#define _ALS_OnPlayerDisconnect
-#endif
-#define OnPlayerDisconnect sppick_OnPlayerDisconnect
-#if defined    sppick_OnPlayerDisconnect
-	forward sppick_OnPlayerDisconnect(playerid, reason);
-#endif
 
 public OnPlayerPickUpDynamicPickup(playerid, pickupid)
 {
-	if (gPlayerPickupsIsStreamPickup[pickupid])
+	if (IsPlayerPickup(pickupid))
 	{
-		if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) == playerid)
+		if (IsPlayerPickupForPlayer(playerid, pickupid))
 		{
 			CallRemoteFunction(
 				"OnPlayerPickUpPlayerPickup",
@@ -111,7 +67,7 @@ ORPC:ORPC_CREATE_PL_PICKUP(playerid, BitStream:bs)
 
 	new streamer_pickupid = Streamer_GetItemStreamerID(playerid, STREAMER_TYPE_PICKUP, iPickupID);
 
-	if (gPlayerPickupsIsStreamPickup[streamer_pickupid])
+	if (IsPlayerPickup(streamer_pickupid))
 	{
 		new targetid = Streamer_GetIntData(STREAMER_TYPE_PICKUP, streamer_pickupid, E_STREAMER_PLAYER_ID);
 
@@ -123,8 +79,11 @@ ORPC:ORPC_CREATE_PL_PICKUP(playerid, BitStream:bs)
 	return 1;
 }
 
+
 /*
+
 	functions
+
 */
 
 stock CreatePlayerPickup(playerid, modelid, type, Float:x, Float:y, Float:z, worldid = -1, Float:streamdistance)
@@ -144,24 +103,24 @@ stock CreatePlayerPickup(playerid, modelid, type, Float:x, Float:y, Float:z, wor
 		return -1;
 	}
 	Iter_Add(PlayerPickupsId[playerid], pickupid);
-	gPlayerPickupsIsStreamPickup[pickupid] = true;
+	SetPlayerPickupValue(pickupid, true);
 	return pickupid;
 }
 
 stock DestroyPlayerPickup(playerid, pickupid)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
 	Iter_Remove(PlayerPickupsId[playerid], pickupid);
-	gPlayerPickupsIsStreamPickup[pickupid] = false;
+	SetPlayerPickupValue(pickupid, false);
 	return DestroyDynamicPickup(pickupid);
 }
 
 stock IsValidPlayerPickup(playerid, pickupid)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
@@ -170,7 +129,7 @@ stock IsValidPlayerPickup(playerid, pickupid)
 
 stock SetPlayerPickupVirtualWorld(playerid, pickupid, worldid)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
@@ -179,7 +138,7 @@ stock SetPlayerPickupVirtualWorld(playerid, pickupid, worldid)
 
 stock SetPlayerPickupPos(playerid, pickupid, Float:x, Float:y, Float:z)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
@@ -191,7 +150,7 @@ stock SetPlayerPickupPos(playerid, pickupid, Float:x, Float:y, Float:z)
 
 stock SetPlayerPickupModel(playerid, pickupid, modelid)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
@@ -200,7 +159,7 @@ stock SetPlayerPickupModel(playerid, pickupid, modelid)
 
 stock SetPlayerPickupType(playerid, pickupid, typeid)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
@@ -209,7 +168,7 @@ stock SetPlayerPickupType(playerid, pickupid, typeid)
 
 stock GetPlayerPickupVirtualWorld(playerid, pickupid)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
@@ -218,7 +177,7 @@ stock GetPlayerPickupVirtualWorld(playerid, pickupid)
 
 stock GetPlayerPickupPos(playerid, pickupid, &Float:x, &Float:y, &Float:z)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
@@ -230,7 +189,7 @@ stock GetPlayerPickupPos(playerid, pickupid, &Float:x, &Float:y, &Float:z)
 
 stock GetPlayerPickupModel(playerid, pickupid)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
@@ -239,9 +198,32 @@ stock GetPlayerPickupModel(playerid, pickupid)
 
 stock GetPlayerPickupType(playerid, pickupid)
 {
-	if (Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) != playerid)
+	if (!IsPlayerPickupForPlayer(playerid, pickupid))
 	{
 		return 0;
 	}
 	return Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_TYPE, modelid);
+}
+
+
+/*
+
+	static functions
+
+*/
+
+static stock SetPlayerPickupValue(pickupid, bool:value)
+{
+	gPlayerPickupsIsStreamPickup[pickupid] = value;
+	return 1;
+}
+
+static stock IsPlayerPickupForPlayer(playerid, pickupid)
+{
+	return Streamer_GetIntData(STREAMER_TYPE_PICKUP, pickupid, E_STREAMER_PLAYER_ID) == playerid;
+}
+
+static stock IsPlayerPickup(pickupid)
+{
+	return gPlayerPickupsIsStreamPickup[pickupid];
 }
